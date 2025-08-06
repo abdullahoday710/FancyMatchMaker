@@ -1,12 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace AuthService.Entities
 {
-    public class UserEntity
+    public class UserEntity : IdentityUser<long>
     {
-        [Key]
-        public long ID { get; set; }
 
-        public required string UserEmail { get; set; }
     }
 }
