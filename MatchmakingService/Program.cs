@@ -1,5 +1,6 @@
 using Common;
 using MatchmakingService.Context;
+using MatchmakingService.Services;
 using MatchmakingService.Subscribers;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,12 @@ namespace MatchmakingService
             CommonServiceBuilder.AddRabbitMQServices<MatchMakingServiceDBContext>(ref builder);
 
             RegisterSubscribers(ref builder);
+
+            // Register matchmaking service as singleton
+            builder.Services.AddSingleton(new MatchMakerService("localhost:6379"));
+
+            // Register matchmaking background worker
+            builder.Services.AddHostedService<MatchmakingWorker>();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();

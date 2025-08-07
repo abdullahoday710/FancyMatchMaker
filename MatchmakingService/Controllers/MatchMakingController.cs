@@ -1,20 +1,21 @@
 ﻿using Common.Controllers;
 using MatchmakingService.Context;
 using MatchmakingService.Entities;
-using Microsoft.AspNetCore.Authorization;
+using MatchmakingService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace MatchmakingService.Controllers
 {
     public class MatchMakingController : BaseAuthController
     {
         private readonly MatchMakingServiceDBContext _dbContext;
+        private readonly MatchMakerService _matchmakingService;
 
-        public MatchMakingController(MatchMakingServiceDBContext ctx)
+        public MatchMakingController(MatchMakingServiceDBContext ctx, MatchMakerService matchmaker)
         {
             _dbContext = ctx;
+            _matchmakingService = matchmaker;
         }
 
 
@@ -32,6 +33,34 @@ namespace MatchmakingService.Controllers
 
             return Unauthorized();
             
+        }
+
+        [HttpPost]
+        [Route("JoinQueue")]
+        public async Task<IActionResult> JoinQueue()
+        {
+            if (UserId != null)
+            {
+                MatchMakingProfileEntity profile;
+                profile = await _dbContext.MatchMakingProfiles.Where(p => p.UserID == UserId).FirstOrDefaultAsync();
+                await _matchmakingService.EnqueuePlayerAsync(profile);
+                return Ok("Player added to queue.");
+            }
+
+            return Unauthorized();
+        }
+
+        [HttpPost]
+        [Route("LeaveQueue")]
+        public async Task<IActionResult> LeaveQueue()
+        {
+            if (UserId != null)
+            {
+                await _matchmakingService.RemovePlayerFromQueue(UserId.Value);
+                return Ok("Player removed from queue.");
+            }
+
+            return Unauthorized();
         }
 
     }
