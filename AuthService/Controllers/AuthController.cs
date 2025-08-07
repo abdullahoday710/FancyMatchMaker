@@ -9,14 +9,11 @@ using Common.Response;
 using Common.Messaging;
 using AuthService.Request;
 using DotNetCore.CAP;
+using Common.Controllers;
 
 namespace AuthService.Controllers
 {
-    [Produces("application/json")]
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize(AuthenticationSchemes = "Bearer")]
-    public class AuthController : ControllerBase
+    public class AuthController : BaseAuthController
     {
         private readonly ICapPublisher _capPublisher;
         private readonly UserManager<UserEntity> _userManager;
