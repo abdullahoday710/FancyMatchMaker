@@ -159,8 +159,9 @@ namespace MatchmakingService.Services
 
                     if (isMatchDeclinedByAsshole)
                     {
+                        var matchHashKeys = await _redis.HashKeysAsync(key);
                         // Re-queue players that stuck around
-                        CancelMatch(matchID, matchHashValues);
+                        CancelMatch(matchID, matchHashKeys);
                     }
                     
 
