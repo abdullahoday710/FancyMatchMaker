@@ -32,9 +32,24 @@ services:
       - auth_postgres_data:/var/lib/postgresql/data
     networks:
       - backend
+  
+  matchmaking_postgres:
+    image: postgres:16
+    container_name: matchmaking_postgres
+    environment:
+      POSTGRES_USER: match_db
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: match_db
+    ports:
+      - "5133:5432"
+    volumes:
+      - match_making_postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
 
 networks:
   backend:
 
 volumes:
   auth_postgres_data:
+  match_making_postgres_data:

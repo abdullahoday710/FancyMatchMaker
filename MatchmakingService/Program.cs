@@ -1,4 +1,6 @@
 using Common;
+using MatchmakingService.Context;
+using Microsoft.EntityFrameworkCore;
 
 namespace MatchmakingService
 {
@@ -7,6 +9,7 @@ namespace MatchmakingService
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddDbContext<MatchMakingServiceDBContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("MatchMakingServiceDB")));
 
             // Add services to the container.
             CommonServiceBuilder.AddAuthServices(ref builder);
