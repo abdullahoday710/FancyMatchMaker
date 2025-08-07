@@ -14,6 +14,7 @@ namespace AuthService
             builder.Services.AddDbContext<AuthServiceDBContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("AuthServiceDB")));
 
             CommonServiceBuilder.AddAuthServices(ref builder);
+            CommonServiceBuilder.AddRabbitMQServices<AuthServiceDBContext>(ref builder);
 
             builder.Services.AddDataProtection();
 

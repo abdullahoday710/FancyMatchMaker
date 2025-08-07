@@ -1,11 +1,18 @@
 using Common;
 using MatchmakingService.Context;
+using MatchmakingService.Subscribers;
 using Microsoft.EntityFrameworkCore;
 
 namespace MatchmakingService
 {
     public class Program
     {
+        public static void RegisterSubscribers(ref WebApplicationBuilder builder)
+        {
+            // Register all your kafka subscribers here
+            builder.Services.AddTransient<UserRegisteredSubscriber>();
+        }
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +20,9 @@ namespace MatchmakingService
 
             // Add services to the container.
             CommonServiceBuilder.AddAuthServices(ref builder);
+            CommonServiceBuilder.AddRabbitMQServices<MatchMakingServiceDBContext>(ref builder);
 
+            RegisterSubscribers(ref builder);
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();

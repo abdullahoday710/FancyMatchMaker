@@ -6,7 +6,9 @@ using AuthService.Entities;
 using AuthService.JWT;
 
 using Common.Response;
+using Common.Messaging;
 using AuthService.Request;
+using DotNetCore.CAP;
 
 namespace AuthService.Controllers
 {
@@ -16,12 +18,12 @@ namespace AuthService.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class AuthController : ControllerBase
     {
-        private readonly AuthServiceDBContext _context;
+        private readonly ICapPublisher _capPublisher;
         private readonly UserManager<UserEntity> _userManager;
 
-        public AuthController(AuthServiceDBContext ctx, UserManager<UserEntity> userManager)
+        public AuthController(AuthServiceDBContext ctx, UserManager<UserEntity> userManager, ICapPublisher capPublisher)
         {
-            _context = ctx;
+            _capPublisher = capPublisher;
             _userManager = userManager;
         }
 
@@ -62,7 +64,14 @@ namespace AuthService.Controllers
             var result = await _userManager.CreateAsync(user, request.Password);
 
             if (result.Succeeded)
+            {
+                var message = new UserRegisteredMessage { UserID = user.Id, UserEmail = user.Email, UserName = user.UserName };
+
+                _capPublisher.Publish(TopicNames.NewUserRegistered, message);
+
                 return Ok(new BaseResponse(true, 200, "User created successfully", user));
+            }
+ 
 
             return BadRequest(new BaseResponse(false, 400, "An error has occured when creating the user", result.Errors));
         }

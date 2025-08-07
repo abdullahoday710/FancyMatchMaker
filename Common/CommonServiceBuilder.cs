@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Common
 {
@@ -32,6 +33,22 @@ namespace Common
                     ValidIssuer = "RockPaperScissorsAuthService",
                     IssuerSigningKey = rsaPublicKey
                 };
+            });
+        }
+
+        public static void AddRabbitMQServices<TContext>(ref WebApplicationBuilder builder) where TContext : DbContext
+        {
+            builder.Services.AddCap(x =>
+            {
+                x.UseEntityFramework<TContext>();
+
+                x.UseRabbitMQ(opt =>
+                {
+                    opt.HostName = "localhost";
+                    opt.Port = 5673;
+                    opt.UserName = "guest";
+                    opt.Password = "guest";
+                });   
             });
         }
 

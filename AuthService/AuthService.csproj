@@ -8,6 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotNetCore.CAP" Version="8.3.5" />
+    <PackageReference Include="DotNetCore.CAP.PostgreSql" Version="8.3.5" />
+    <PackageReference Include="DotNetCore.CAP.RabbitMQ" Version="8.3.5" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.19" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.19" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.8" />
