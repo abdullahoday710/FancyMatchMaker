@@ -49,32 +49,128 @@ namespace MatchmakingService.Services
             return false; // Not found
         }
 
-        public async Task<MatchMakingProfileEntity[]> TryMatchPlayersAsync(int playersPerMatch = 2)
+        // This is just a placeholder matchmaking function that matches players 1v1 classic way without any consideration to skill or elo ratings.
+        public async Task<List<MatchMakingProfileEntity>> TryMatchPlayersAsync(int playersPerMatch = 2)
         {
+            var result = new List<MatchMakingProfileEntity>();
+
             var length = await _redis.ListLengthAsync(QueueListKey);
             if (length < playersPerMatch)
-                return Array.Empty<MatchMakingProfileEntity>();
-
-            MatchMakingProfileEntity[] players = new MatchMakingProfileEntity[playersPerMatch];
+                return result;
 
             for (int i = 0; i < playersPerMatch; i++)
             {
                 var value = await _redis.ListLeftPopAsync(QueueListKey);
-                if (value.IsNullOrEmpty) return Array.Empty<MatchMakingProfileEntity>();
+
+                if (value.IsNullOrEmpty) return result;
 
                 var player = JsonSerializer.Deserialize<MatchMakingProfileEntity>(value);
                 if (player == null) continue;
 
                 await _redis.SetRemoveAsync(QueueSetKey, player.ID.ToString());
-                players[i] = player;
+                result.Add(player);
             }
 
-            return players;
+            return result;
         }
 
         public async Task<long> QueueSizeAsync()
         {
             return await _redis.ListLengthAsync(QueueListKey);
+        }
+
+        public async Task<string> GenerateNewMatchEntry(List<MatchMakingProfileEntity> players)
+        {
+            string matchID = Guid.NewGuid().ToString();
+
+            List<HashEntry> entries = new List<HashEntry>();
+
+            foreach (var player in players)
+            {
+                var entry = new HashEntry(player.UserID, "pending");
+                entries.Add(entry);
+            }
+
+
+            // Players have 30 seconds to accept a match.
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var expiry = now + 30; // Expires in 30 seconds
+            var matchExpire = new HashEntry("expiry", expiry);
+            entries.Add(matchExpire);
+
+            await _redis.HashSetAsync($"match:{matchID}:status", entries.ToArray());
+            await _redis.SetAddAsync("matchmaking:active", matchID);
+            return matchID;
+        }
+
+        public void CancelMatch(string matchID, RedisValue[] userIDs)
+        {
+            foreach (var userIDVal in userIDs)
+            {
+                // Retard way of doing things but who cares. If you are a tech lead that is scanning through my github to see if I am good or not,
+                // Well, Congrats, No one gave a shit and dug this deep, So you would be a first. When you call me mention this, It would be funny.
+                if (userIDVal.ToString() == "expiry")
+                {
+                    continue;
+                }
+
+                // TODO : re-queue players that didn't decline the match.
+
+            }
+        }
+
+        public async Task CheckMatchTimeoutsAsync()
+        {
+            var matchIDs = await _redis.SetMembersAsync("matchmaking:active");
+
+            foreach (var matchIDRedisValue in matchIDs)
+            {
+                string matchID = matchIDRedisValue.ToString();
+                string key = $"match:{matchID}:status";
+
+                var matchExpiry = await _redis.HashGetAsync(key, "expiry");
+                var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                bool isMatchExpired = false;
+
+                if (long.TryParse(matchExpiry, out long expiryTimestamp))
+                {
+                    if (now >= expiryTimestamp)
+                    {
+                        isMatchExpired = true;
+                    }
+                }
+
+                if (isMatchExpired)
+                {
+                    var matchHashValues = await _redis.HashValuesAsync(key);
+
+                    // True when some asshole didn't press accept and the match time is expired.
+                    bool isMatchDeclinedByAsshole = false;
+
+                    foreach (var matchValue in matchHashValues)
+                    {
+                        if (matchValue.ToString() == "pending")
+                        {
+                            isMatchDeclinedByAsshole = true;
+                            break;
+                        }
+                    }
+
+                    if (isMatchDeclinedByAsshole)
+                    {
+                        // Re-queue players that stuck around
+                        CancelMatch(matchID, matchHashValues);
+                    }
+                    
+
+
+                    // Clean up
+                    await _redis.KeyDeleteAsync(key); // delete the hash
+                    await _redis.SetRemoveAsync("matchmaking:active", matchID); // remove from active set
+                }
+
+            }
         }
     }
 }
