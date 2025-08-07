@@ -1,11 +1,8 @@
 using AuthService.Context;
 using Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using AuthService.Entities;
-using Microsoft.OpenApi.Models;
 
 namespace AuthService
 {
@@ -16,26 +13,7 @@ namespace AuthService
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContext<AuthServiceDBContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("AuthServiceDB")));
 
-            var publicKeyPath = Environment.GetEnvironmentVariable("ROCK_JWT_PUBLIC_KEY_PATH");
-
-            var rsaPublicKey = RSAKeyUtils.LoadRSAKey(publicKeyPath);
-
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateLifetime = true,
-                    ValidateAudience = false,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = "RockPaperScissorsAuthService",
-                    IssuerSigningKey = rsaPublicKey
-                };
-            });
+            CommonServiceBuilder.AddAuthServices(ref builder);
 
             builder.Services.AddDataProtection();
 
@@ -55,32 +33,7 @@ namespace AuthService
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
-                c.AddSecurityDefinition("Bearer",
-            new OpenApiSecurityScheme
-            {
-                In = ParameterLocation.Header,
-                Description = "Please enter into field the word 'Bearer' following by space and JWT",
-                Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey
-            });
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                        },
-                        Scheme = "oauth2",
-                        Name = "Bearer",
-                        In = ParameterLocation.Header,
-
-                        },
-                        new List<string>()
-                    }
-                });
+                CommonServiceBuilder.AddAuthServicesToSwaggerGen(ref c);
             });
 
             var app = builder.Build();
