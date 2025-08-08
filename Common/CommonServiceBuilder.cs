@@ -12,7 +12,7 @@ namespace Common
     // This works by declaring functions that usually take a ref to builders or options and starts appending the necessary services to it.
     public class CommonServiceBuilder
     {
-        public static void AddAuthServices(ref WebApplicationBuilder builder)
+        public static void AddAuthServices(ref WebApplicationBuilder builder, bool useSignalR)
         {
             var publicKeyPath = Environment.GetEnvironmentVariable("ROCK_JWT_PUBLIC_KEY_PATH");
 
@@ -33,6 +33,24 @@ namespace Common
                     ValidIssuer = "RockPaperScissorsAuthService",
                     IssuerSigningKey = rsaPublicKey
                 };
+
+                if (useSignalR)
+                {
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            // Allow JWT to be passed in SignalR query string for WebSockets
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken))
+                            {
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+                }
             });
         }
 

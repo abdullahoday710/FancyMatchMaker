@@ -12,6 +12,7 @@ import { useNavigate } from "react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { IsSignedIn } from "./api/userState";
+import { connectToMatchMakingHub } from "./signalRHandlers/matchMakingHubConnection";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -52,6 +53,7 @@ export default function App() {
     {
       console.log("AUTH STATUS ? " + is_logged_in)
       if (is_logged_in) {
+        connectToMatchMakingHub();
         navigate("/dashboard", { replace: true });
       } else {
         navigate("/login", { replace: true });

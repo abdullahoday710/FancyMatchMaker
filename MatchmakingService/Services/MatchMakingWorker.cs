@@ -1,4 +1,6 @@
-﻿using StackExchange.Redis;
+﻿using MatchmakingService.Hubs;
+using Microsoft.AspNetCore.SignalR;
+using StackExchange.Redis;
 
 namespace MatchmakingService.Services
 {
@@ -28,9 +30,6 @@ namespace MatchmakingService.Services
                         _logger.LogInformation("Matched players: {Player1} vs {Player2}", players[0].UserID, players[1].UserID);
 
                         await _matchmakingService.GenerateNewMatchEntry(players);
-
-                        // TODO: Start game session, notify players, push to another Redis list, etc.
-                        // All the magic will happen here
                     }
 
                     // Check for matches that weren't accepted in time.

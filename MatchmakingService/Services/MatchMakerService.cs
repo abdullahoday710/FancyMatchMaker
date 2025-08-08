@@ -1,5 +1,8 @@
 ﻿using MatchmakingService.Entities;
+using MatchmakingService.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using StackExchange.Redis;
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace MatchmakingService.Services
@@ -11,10 +14,12 @@ namespace MatchmakingService.Services
         private const string QueueListKey = "matchmaking:rankedqueue:list";
         private const string QueueSetKey = "matchmaking:rankedqueue:set";
 
-        public MatchMakerService(string redisConnection)
+        private readonly MatchMakerNotifierService _notifyService;
+        public MatchMakerService(MatchMakerNotifierService notifyService)
         {
-            var connection = ConnectionMultiplexer.Connect(redisConnection);
+            var connection = ConnectionMultiplexer.Connect("localhost:6379");
             _redis = connection.GetDatabase();
+            _notifyService = notifyService;
         }
 
         public async Task<bool> EnqueuePlayerAsync(MatchMakingProfileEntity player)
@@ -85,10 +90,14 @@ namespace MatchmakingService.Services
 
             List<HashEntry> entries = new List<HashEntry>();
 
+            var playerIDs = new List<string>();
+
             foreach (var player in players)
             {
                 var entry = new HashEntry(player.UserID, "pending");
                 entries.Add(entry);
+
+                playerIDs.Add(player.UserID.ToString());
             }
 
 
@@ -102,6 +111,8 @@ namespace MatchmakingService.Services
             await _redis.SetAddAsync("matchmaking:active", matchID);
 
             Console.WriteLine(matchID);
+
+            await _notifyService.NotifyMatchFound(playerIDs.ToArray(), matchID);
             return matchID;
         }
 

@@ -13,7 +13,7 @@ namespace AuthService
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContext<AuthServiceDBContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("AuthServiceDB")));
 
-            CommonServiceBuilder.AddAuthServices(ref builder);
+            CommonServiceBuilder.AddAuthServices(ref builder, false);
             CommonServiceBuilder.AddRabbitMQServices<AuthServiceDBContext>(ref builder);
 
             builder.Services.AddCors(options =>
