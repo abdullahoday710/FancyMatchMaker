@@ -12,14 +12,22 @@ export default function Dashboard() {
   const [searchingForMatch, setSearchingForMatch] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const modalRef = useRef<MatchFoundModalHandle>(null);
-
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     GetUserProfile().then((profile) => {
       setProfile(profile);
     });
+        // Preload the audio once when component mounts
+    audioRef.current = new Audio("/sounds/match_found.mp3");
+    audioRef.current.load();
 
       const unsubscribeMatchFound = onMatchFound((data) => {
             modalRef.current?.show();
+
+            if (audioRef.current) {
+              audioRef.current.currentTime = 0; // rewind to start
+              audioRef.current.play();
+            }
         });
 
         return () => unsubscribeMatchFound();
