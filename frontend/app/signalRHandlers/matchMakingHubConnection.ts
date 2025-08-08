@@ -1,28 +1,35 @@
+// matchmakingHubClient.js
 import * as signalR from "@microsoft/signalr";
 import { matchmaking_url } from "~/api/axiosInstances";
 import { GetAuthToken } from "~/api/userState";
 
-export const connectToMatchMakingHub = async () =>
-{
+type MatchFoundCallback = (matchID: string) => void;
+
+const listeners = new Set<MatchFoundCallback>();
+
+export const onMatchFound = (callback: MatchFoundCallback): (() => void) => {
+    listeners.add(callback);
+    return () => listeners.delete(callback);
+};
+
+let connection;
+
+export const connectToMatchMakingHub = async () => {
     const token = await GetAuthToken();
 
-    if (token != null)
-    {
-        const connection = new signalR.HubConnectionBuilder()
+    if (token != null) {
+        connection = new signalR.HubConnectionBuilder()
             .withUrl(matchmaking_url + "/matchmakingHub", {
                 accessTokenFactory: () => token
             })
             .withAutomaticReconnect()
             .build();
 
-            connection.on("MatchFound", (data) => {
-    console.log("Match found!", data);
-    // You can update UI or trigger other logic here
-});
+        connection.on("MatchFound", (data) => {
+            listeners.forEach((cb) => cb(data));
+        });
 
-        connection.start()
-            .then(() => console.log("Connected to matchmaking hub"))
-            .catch(err => console.error(err));
+        await connection.start();
+        console.log("Connected to matchmaking hub");
     }
-}
-
+};

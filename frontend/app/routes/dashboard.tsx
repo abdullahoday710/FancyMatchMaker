@@ -1,18 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { GetUserProfile, SignOut } from "~/api/userState";
 import { useNavigate } from "react-router";
-
+import { onMatchFound } from "~/signalRHandlers/matchMakingHubConnection";
+import { matchService } from "~/api/axiosInstances";
+import MatchFoundModalHandle from "~/components/matchFoundModal";
+import MatchFoundModal from "~/components/matchFoundModal";
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<{ userName?: string }>({});
   const [searchingForMatch, setSearchingForMatch] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const modalRef = useRef<MatchFoundModalHandle>(null);
 
   useEffect(() => {
     GetUserProfile().then((profile) => {
       setProfile(profile);
     });
+
+      const unsubscribeMatchFound = onMatchFound((data) => {
+            modalRef.current?.show();
+        });
+
+        return () => unsubscribeMatchFound();
   }, []);
 
   // Timer effect: runs only when searchingForMatch is true
@@ -34,12 +44,21 @@ export default function Dashboard() {
     navigate("/login", { replace: true });
   };
 
+  let onMatchAccepted = async () =>
+  {
+
+  }
+
   let onFindMatch = async () => {
     setSearchingForMatch(true);
+
+    await matchService.post("/MatchMaking/JoinQueue");
   };
 
   let onCancelSearch = async () => {
     setSearchingForMatch(false);
+
+    await matchService.post("/MatchMaking/LeaveQueue");
   };
 
   // Format seconds to mm:ss
@@ -100,6 +119,18 @@ export default function Dashboard() {
         <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-sm flex justify-center">
           {RenderQueueControlButtons()}
         </div>
+
+              <MatchFoundModal ref={modalRef}>
+        <h2>Match Found !</h2>
+                <button
+          onClick={() => {
+            onMatchAccepted();
+          }}
+          className="bg-indigo-600 hover:bg-red-700 transition px-4 py-2 rounded-md font-semibold"
+        >
+          Accept
+        </button>
+      </MatchFoundModal>
       </main>
     </div>
   );
