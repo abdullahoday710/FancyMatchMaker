@@ -1,6 +1,7 @@
 ﻿using Common.Controllers;
 using MatchmakingService.Context;
 using MatchmakingService.Entities;
+using MatchmakingService.Request;
 using MatchmakingService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -58,6 +59,19 @@ namespace MatchmakingService.Controllers
             {
                 await _matchmakingService.RemovePlayerFromQueue(UserId.Value);
                 return Ok("Player removed from queue.");
+            }
+
+            return Unauthorized();
+        }
+
+        [HttpPost]
+        [Route("AcceptMatch")]
+        public async Task<IActionResult> AcceptMatch(AcceptMatchRequest request)
+        {
+            if (UserId != null)
+            {
+                await _matchmakingService.PlayerAcceptMatch(UserId.Value, request.MatchID);
+                return Ok("Player accepted match");
             }
 
             return Unauthorized();

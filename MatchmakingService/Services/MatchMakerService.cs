@@ -100,7 +100,31 @@ namespace MatchmakingService.Services
 
             await _redis.HashSetAsync($"match:{matchID}:status", entries.ToArray());
             await _redis.SetAddAsync("matchmaking:active", matchID);
+
+            Console.WriteLine(matchID);
             return matchID;
+        }
+
+        public async Task PlayerAcceptMatch(long userID, string matchID)
+        {
+            string key = $"match:{matchID}:status";
+
+            var currentStatus = await _redis.HashGetAsync(key, userID.ToString());
+
+            if (currentStatus.IsNull)
+            {
+                // Player not found in this match
+                return;
+            }
+
+            if (currentStatus.ToString() != "pending")
+            {
+                // Only update if they're pending
+                return;
+            }
+
+            // Update their status to accepted
+            await _redis.HashSetAsync(key, userID.ToString(), "accepted");
         }
 
         public void CancelMatch(string matchID, RedisValue[] userIDs)
