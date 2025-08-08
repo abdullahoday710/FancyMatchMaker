@@ -10,6 +10,7 @@ using Common.Messaging;
 using AuthService.Request;
 using DotNetCore.CAP;
 using Common.Controllers;
+using AuthService.Response;
 
 namespace AuthService.Controllers
 {
@@ -37,7 +38,9 @@ namespace AuthService.Controllers
                 if (user != null && await _userManager.CheckPasswordAsync(user, request.Password))
                 {
                     var token = JWTUtils.GenerateJwtToken(user.Id.ToString(), user.Email, DateTime.UtcNow.AddHours(24));
-                    return Ok(new BaseResponse(true, 200, "success", token));
+                    LoginResponse response = new LoginResponse { AuthToken = token, Email = user.Email, UserName = user.UserName };
+
+                    return Ok(new BaseResponse(true, 200, "success", response));
                 }
             }
 

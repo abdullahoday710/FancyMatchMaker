@@ -11,6 +11,7 @@ import { useNavigate } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { IsSignedIn } from "./api/userState";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -47,12 +48,16 @@ export default function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/dashboard", { replace: true });
-    } else {
-      navigate("/login", { replace: true });
-    }
+    IsSignedIn().then((is_logged_in) =>
+    {
+      console.log("AUTH STATUS ? " + is_logged_in)
+      if (is_logged_in) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/login", { replace: true });
+      }
+    });
+
   }, [navigate]);
 
   return <Outlet />;

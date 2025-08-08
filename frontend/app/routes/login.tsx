@@ -3,6 +3,8 @@ import { useState } from "react";
 import {LOGIN_ENDPOINT, REGISTER_ENDPOINT} from "app/api/endpoits"
 
 import { authService } from "~/api/axiosInstances";
+import { SignIn } from "~/api/userState";
+import { useNavigate } from "react-router";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -26,7 +28,7 @@ export default function Login() {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
-
+  const navigate = useNavigate();
   const handleLoginSubmit = async (e: React.FormEvent) => {
 
     e.preventDefault();
@@ -41,7 +43,11 @@ export default function Login() {
       "password": password
     })
 
-    console.log(response.data)
+    var profile = {"userEmail" : response.data.record.email, "userName": response.data.record.userName};
+
+    await SignIn(response.data.record.authToken, JSON.stringify(profile));
+
+    navigate("/dashboard", {replace: true})
 
   };
 
