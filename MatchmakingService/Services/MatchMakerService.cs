@@ -1,5 +1,6 @@
 ﻿using MatchmakingService.Entities;
 using MatchmakingService.Hubs;
+using MatchmakingService.RedisHandlers;
 using Microsoft.AspNetCore.SignalR;
 using StackExchange.Redis;
 using System.Collections.Concurrent;
@@ -11,8 +12,7 @@ namespace MatchmakingService.Services
     public class MatchMakerService
     {
         private readonly IDatabase _redis;
-        private const string QueueListKey = "matchmaking:rankedqueue:list";
-        private const string QueueSetKey = "matchmaking:rankedqueue:set";
+        private RedisMatchMakingQueue RedisMatchMakingQueue;
 
         private readonly MatchMakerNotifierService _notifyService;
         public MatchMakerService(MatchMakerNotifierService notifyService)
@@ -20,38 +20,23 @@ namespace MatchmakingService.Services
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
             _redis = connection.GetDatabase();
             _notifyService = notifyService;
+
+            RedisMatchMakingQueue = new RedisMatchMakingQueue(_redis);
         }
 
         public async Task<bool> EnqueuePlayerAsync(MatchMakingProfileEntity player)
         {
-            string playerKey = player.ID.ToString();
-
-            // Try to add to set first
-            bool added = await _redis.SetAddAsync(QueueSetKey, playerKey);
-            if (!added)
-                return false; // Player already in queue
-
             string json = JsonSerializer.Serialize(player);
-            await _redis.ListRightPushAsync(QueueListKey, json);
+            await RedisMatchMakingQueue.EnqueuePlayerAsync(player.ID, json);
+
             return true;
         }
 
         public async Task<bool> RemovePlayerFromQueue(long profileID)
         {
-            var items = await _redis.ListRangeAsync(QueueListKey);
+            await RedisMatchMakingQueue.RemovePlayerFromQueueAsync(profileID);
 
-            foreach (var item in items)
-            {
-                var player = JsonSerializer.Deserialize<MatchMakingProfileEntity>(item!);
-                if (player != null && player.ID == profileID)
-                {
-                    await _redis.ListRemoveAsync(QueueListKey, item);
-                    await _redis.SetRemoveAsync(QueueSetKey, profileID.ToString());
-                    return true;
-                }
-            }
-
-            return false; // Not found
+            return true;
         }
 
         // This is just a placeholder matchmaking function that matches players 1v1 classic way without any consideration to skill or elo ratings.
@@ -59,29 +44,24 @@ namespace MatchmakingService.Services
         {
             var result = new List<MatchMakingProfileEntity>();
 
-            var length = await _redis.ListLengthAsync(QueueListKey);
+            var length = await _redis.ListLengthAsync(RedisMatchMakingQueue.GetQueueKey());
             if (length < playersPerMatch)
                 return result;
 
             for (int i = 0; i < playersPerMatch; i++)
             {
-                var value = await _redis.ListLeftPopAsync(QueueListKey);
+                var value = await _redis.ListLeftPopAsync(RedisMatchMakingQueue.GetQueueKey());
 
                 if (value.IsNullOrEmpty) return result;
 
                 var player = JsonSerializer.Deserialize<MatchMakingProfileEntity>(value);
                 if (player == null) continue;
 
-                await _redis.SetRemoveAsync(QueueSetKey, player.ID.ToString());
+                await _redis.SetRemoveAsync(RedisMatchMakingQueue.GetQueueSetKey(), player.ID.ToString());
                 result.Add(player);
             }
 
             return result;
-        }
-
-        public async Task<long> QueueSizeAsync()
-        {
-            return await _redis.ListLengthAsync(QueueListKey);
         }
 
         public async Task<string> GenerateNewMatchEntry(List<MatchMakingProfileEntity> players)
