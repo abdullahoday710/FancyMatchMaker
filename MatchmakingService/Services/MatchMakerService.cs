@@ -116,11 +116,69 @@ namespace MatchmakingService.Services
             return matchID;
         }
 
+        public async Task CheckIfEveryoneAcceptedThenStartMatch(string matchID)
+        {
+            string key = $"match:{matchID}:status";
+
+            var matchHashKeys = await _redis.HashKeysAsync(key);
+
+            var playersToNotify = new List<string>();
+
+            foreach (var hashKey in matchHashKeys)
+            {
+                if (hashKey.ToString() == "expiry")
+                {
+                    continue;
+                }
+
+                playersToNotify.Add(hashKey.ToString());
+            }
+
+            var matchHashEntries = await _redis.HashGetAllAsync(key);
+
+            int accepted_players = 0;
+
+            foreach (var hashEntry in matchHashEntries)
+            {
+                if (hashEntry.Name == "expiry")
+                {
+                    continue;
+                }
+
+                if (hashEntry.Value == "accepted")
+                {
+                    accepted_players++;
+                }
+            }
+
+            if (accepted_players == 2)
+            {
+                await _notifyService.NotifyMatchStarted(playersToNotify.ToArray());
+
+                // Clean up
+                await _redis.KeyDeleteAsync(key); // delete the hash
+                await _redis.SetRemoveAsync("matchmaking:active", matchID); // remove from active set
+            }
+        }
+
         public async Task PlayerAcceptMatch(long userID, string matchID)
         {
             string key = $"match:{matchID}:status";
 
             var currentStatus = await _redis.HashGetAsync(key, userID.ToString());
+            var matchHashKeys = await _redis.HashKeysAsync(key);
+
+            var playersToNotify = new List<string>();
+
+            foreach (var hashKey in matchHashKeys)
+            {
+                if (hashKey.ToString() == "expiry")
+                {
+                    continue;
+                }
+
+                playersToNotify.Add(hashKey.ToString());
+            }
 
             if (currentStatus.IsNull)
             {
@@ -136,6 +194,10 @@ namespace MatchmakingService.Services
 
             // Update their status to accepted
             await _redis.HashSetAsync(key, userID.ToString(), "accepted");
+
+            await _notifyService.NotifyMatchAccepted(playersToNotify.ToArray());
+
+            await CheckIfEveryoneAcceptedThenStartMatch(matchID);
         }
 
         public void CancelMatch(string matchID, RedisValue[] userIDs)

@@ -1,36 +1,59 @@
 import { useEffect, useState, useRef } from "react";
 import { GetUserProfile, SignOut } from "~/api/userState";
 import { useNavigate } from "react-router";
-import { onMatchFound } from "~/signalRHandlers/matchMakingHubConnection";
+import { onMatchFound, onMatchStarted } from "~/signalRHandlers/matchMakingHubConnection";
 import { matchService } from "~/api/axiosInstances";
 import MatchFoundModalHandle from "~/components/matchFoundModal";
 import MatchFoundModal from "~/components/matchFoundModal";
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<{ userName?: string }>({});
   const [searchingForMatch, setSearchingForMatch] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [currentMatchID, setCurrentMatchID] = useState("");
+
   const modalRef = useRef<MatchFoundModalHandle>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  let handleOnMatchFound = async (matchID: string) => {
+    modalRef.current?.show();
+
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0; // rewind to start
+      audioRef.current.play();
+    }
+
+    setCurrentMatchID(matchID)
+  }
+
+  let handleMatchStarted = async () => {
+      modalRef.current?.hide();
+      setSearchingForMatch(false);
+      setElapsedSeconds(0);
+  }
+
   useEffect(() => {
     GetUserProfile().then((profile) => {
       setProfile(profile);
     });
-        // Preload the audio once when component mounts
+    // Preload the audio once when component mounts
     audioRef.current = new Audio("/sounds/match_found.mp3");
     audioRef.current.load();
 
-      const unsubscribeMatchFound = onMatchFound((data) => {
-            modalRef.current?.show();
+    const unsubscribeMatchFound = onMatchFound((matchID: string) => {
+      handleOnMatchFound(matchID)
+    });
 
-            if (audioRef.current) {
-              audioRef.current.currentTime = 0; // rewind to start
-              audioRef.current.play();
-            }
-        });
+    const unsubscribeMatchStarted = onMatchStarted(() => {
+      handleMatchStarted();
+    });
 
-        return () => unsubscribeMatchFound();
+    return () => {
+      unsubscribeMatchFound();
+      unsubscribeMatchStarted();
+    }
   }, []);
 
   // Timer effect: runs only when searchingForMatch is true
@@ -52,9 +75,10 @@ export default function Dashboard() {
     navigate("/login", { replace: true });
   };
 
-  let onMatchAccepted = async () =>
-  {
+  let onMatchAccepted = async () => {
 
+    console.log(currentMatchID.matchId);
+    await matchService.post("/MatchMaking/AcceptMatch", { "matchId": currentMatchID.matchId })
   }
 
   let onFindMatch = async () => {
@@ -128,17 +152,17 @@ export default function Dashboard() {
           {RenderQueueControlButtons()}
         </div>
 
-              <MatchFoundModal ref={modalRef}>
-        <h2>Match Found !</h2>
-                <button
-          onClick={() => {
-            onMatchAccepted();
-          }}
-          className="bg-indigo-600 hover:bg-red-700 transition px-4 py-2 rounded-md font-semibold"
-        >
-          Accept
-        </button>
-      </MatchFoundModal>
+        <MatchFoundModal ref={modalRef}>
+          <h2>Match Found !</h2>
+          <button
+            onClick={() => {
+              onMatchAccepted();
+            }}
+            className="bg-indigo-600 hover:bg-red-700 transition px-4 py-2 rounded-md font-semibold"
+          >
+            Accept
+          </button>
+        </MatchFoundModal>
       </main>
     </div>
   );

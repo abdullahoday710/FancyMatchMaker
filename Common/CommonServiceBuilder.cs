@@ -14,7 +14,7 @@ namespace Common
     {
         public static void AddAuthServices(ref WebApplicationBuilder builder, bool useSignalR)
         {
-            var publicKeyPath = Environment.GetEnvironmentVariable("ROCK_JWT_PUBLIC_KEY_PATH");
+            var publicKeyPath = RSAKeyUtils.GetPublicKeyPath();
 
             var rsaPublicKey = RSAKeyUtils.LoadRSAKey(publicKeyPath);
 

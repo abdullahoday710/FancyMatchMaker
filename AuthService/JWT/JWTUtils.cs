@@ -9,7 +9,7 @@ namespace AuthService.JWT
     {
         public static string GenerateJwtToken(string userId, string userEmail, DateTime expireationDate)
         {
-            var privateKeyPath = Environment.GetEnvironmentVariable("ROCK_JWT_PRIVATE_KEY_PATH");
+            var privateKeyPath = RSAKeyUtils.GetPrivateKeyPath();
 
             RsaSecurityKey privateKey;
 

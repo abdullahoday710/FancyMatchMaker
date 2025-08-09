@@ -1,7 +1,7 @@
 import axios from "axios";
 import { GetAuthToken } from "./userState";
 
-export const auth_url = import.meta.env.VITE_API_AUTH;
+export const auth_url = "https://localhost:7180";
 
 export const authService = axios.create({
   baseURL: auth_url,
@@ -9,7 +9,7 @@ export const authService = axios.create({
   headers: {'Content-Type': 'application/json'}
 });
 
-export const matchmaking_url = import.meta.env.VITE_API_MATCHMAKING;
+export const matchmaking_url = "https://localhost:7034";
 
 export const matchService = axios.create({
   baseURL: matchmaking_url,

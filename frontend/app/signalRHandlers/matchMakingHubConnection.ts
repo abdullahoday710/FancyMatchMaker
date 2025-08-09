@@ -4,12 +4,19 @@ import { matchmaking_url } from "~/api/axiosInstances";
 import { GetAuthToken } from "~/api/userState";
 
 type MatchFoundCallback = (matchID: string) => void;
+type MatchStartedCallback = () => void;
 
-const listeners = new Set<MatchFoundCallback>();
+const listenersForMatchFound = new Set<MatchFoundCallback>();
 
 export const onMatchFound = (callback: MatchFoundCallback): (() => void) => {
-    listeners.add(callback);
-    return () => listeners.delete(callback);
+    listenersForMatchFound.add(callback);
+    return () => listenersForMatchFound.delete(callback);
+};
+
+const listenersForMatchStarted = new Set<MatchStartedCallback>();
+export const onMatchStarted = (callback: MatchStartedCallback): (() => void) => {
+    listenersForMatchStarted.add(callback);
+    return () => listenersForMatchStarted.delete(callback);
 };
 
 let connection;
@@ -26,8 +33,17 @@ export const connectToMatchMakingHub = async () => {
             .build();
 
         connection.on("MatchFound", (data) => {
-            listeners.forEach((cb) => cb(data));
+            listenersForMatchFound.forEach((cb) => cb(data));
         });
+
+        connection.on("SomeoneAcceptedMatch", () => {
+            console.log("Someone accepted match")
+        })
+
+        
+        connection.on("MatchStarted", () => {
+            listenersForMatchStarted.forEach((cb) => cb());
+        })
 
         await connection.start();
         console.log("Connected to matchmaking hub");
