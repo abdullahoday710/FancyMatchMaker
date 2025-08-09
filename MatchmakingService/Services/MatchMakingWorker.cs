@@ -27,8 +27,6 @@ namespace MatchmakingService.Services
 
                     if (players.Count > 0)
                     {
-                        _logger.LogInformation("Matched players: {Player1} vs {Player2}", players[0].UserID, players[1].UserID);
-
                         await _matchmakingService.GenerateNewMatchEntry(players);
                     }
 
