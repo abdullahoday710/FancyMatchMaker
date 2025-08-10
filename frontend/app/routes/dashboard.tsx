@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { GetUserProfile, SignOut } from "~/api/userState";
 import { useNavigate } from "react-router";
-import { onMatchFound, onMatchStarted } from "~/signalRHandlers/matchMakingHubConnection";
+import { onMatchFound, onMatchStarted, onSomeoneAcceptedMatch } from "~/signalRHandlers/matchMakingHubConnection";
 import { matchService } from "~/api/axiosInstances";
 import MatchFoundModalHandle from "~/components/matchFoundModal";
 import MatchFoundModal from "~/components/matchFoundModal";
+import CircularCountdown from "~/components/circularCountdown";
+import AcceptedPlayersPreview from "~/components/acceptedPlayersPreview";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ export default function Dashboard() {
   const [searchingForMatch, setSearchingForMatch] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [currentMatchID, setCurrentMatchID] = useState("");
+  const [totalAcceptedPlayers, setTotalAcceptedPlayers] = useState(0);
 
   const modalRef = useRef<MatchFoundModalHandle>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -28,10 +31,24 @@ export default function Dashboard() {
     setCurrentMatchID(matchID)
   }
 
+  let cleanUp = async () => {
+    modalRef.current?.hide();
+    setSearchingForMatch(false);
+    setElapsedSeconds(0);
+    setTotalAcceptedPlayers(0);
+  }
+
   let handleMatchStarted = async () => {
-      modalRef.current?.hide();
-      setSearchingForMatch(false);
-      setElapsedSeconds(0);
+    cleanUp();
+  }
+
+  let handleMatchWasntAccepted = async () => {
+    cleanUp();
+  }
+
+  let handleSomeoneAcceptedMatch = async () => {
+    console.log("SOMEONE ACCEPTED MATCH")
+    setTotalAcceptedPlayers(totalAcceptedPlayers + 1);
   }
 
   useEffect(() => {
@@ -50,9 +67,14 @@ export default function Dashboard() {
       handleMatchStarted();
     });
 
+    const unsubscribeSomeoneAcceptedMatch = onSomeoneAcceptedMatch(() => {
+      handleSomeoneAcceptedMatch();
+    })
+
     return () => {
       unsubscribeMatchFound();
       unsubscribeMatchStarted();
+      unsubscribeSomeoneAcceptedMatch();
     }
   }, []);
 
@@ -153,12 +175,18 @@ export default function Dashboard() {
         </div>
 
         <MatchFoundModal ref={modalRef}>
-          <h2>Match Found !</h2>
+          <h2 className="text-xl font-bold mb-4">Match Found!</h2>
+          <CircularCountdown
+            duration={15}
+            size={120}
+            color="#44cdefff"
+            onComplete={() => handleMatchWasntAccepted()}
+          />
+
+          <AcceptedPlayersPreview totalPlayers={2} acceptedCount={totalAcceptedPlayers} />
           <button
-            onClick={() => {
-              onMatchAccepted();
-            }}
-            className="bg-indigo-600 hover:bg-red-700 transition px-4 py-2 rounded-md font-semibold"
+            onClick={onMatchAccepted}
+            className="bg-indigo-600 hover:bg-red-700 transition px-4 py-2 rounded-md font-semibold mt-4"
           >
             Accept
           </button>

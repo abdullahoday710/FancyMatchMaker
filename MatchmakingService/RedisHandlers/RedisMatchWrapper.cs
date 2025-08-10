@@ -138,13 +138,17 @@ namespace MatchmakingService.RedisHandlers
             // Update their status to accepted
             await _redis.HashSetAsync(_matchKey, userID.ToString(), "accepted");
 
-            
+            var playersToNotify = await GetPlayerIDsInMatch();
+
+            // Notify all players that someone accepted the match
+            await notifyService.NotifyMatchAccepted(playersToNotify.ToArray());
+
 
             bool should_match_start = await CheckIfEveryoneAccepted();
             if (should_match_start)
             {
                 // notify all players that a match has started
-                var playersToNotify = await GetPlayerIDsInMatch();
+                
                 await notifyService.NotifyMatchStarted(playersToNotify.ToArray());
 
                 // Clean up the match from our redis queue.

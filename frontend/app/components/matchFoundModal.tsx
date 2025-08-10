@@ -49,6 +49,11 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     minWidth: 300,
     position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
   },
   closeBtn: {
     position: "absolute",

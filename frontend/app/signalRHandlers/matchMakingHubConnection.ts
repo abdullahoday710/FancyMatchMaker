@@ -5,6 +5,7 @@ import { GetAuthToken } from "~/api/userState";
 
 type MatchFoundCallback = (matchID: string) => void;
 type MatchStartedCallback = () => void;
+type PlayerAcceptedMatchCallback = () => void;
 
 const listenersForMatchFound = new Set<MatchFoundCallback>();
 
@@ -17,6 +18,12 @@ const listenersForMatchStarted = new Set<MatchStartedCallback>();
 export const onMatchStarted = (callback: MatchStartedCallback): (() => void) => {
     listenersForMatchStarted.add(callback);
     return () => listenersForMatchStarted.delete(callback);
+};
+
+const listenersForSomeoneAcceptedMatch = new Set<PlayerAcceptedMatchCallback>();
+export const onSomeoneAcceptedMatch = (callback: PlayerAcceptedMatchCallback): (() => void) => {
+    listenersForSomeoneAcceptedMatch.add(callback);
+    return () => listenersForSomeoneAcceptedMatch.delete(callback);
 };
 
 let connection;
@@ -37,7 +44,8 @@ export const connectToMatchMakingHub = async () => {
         });
 
         connection.on("SomeoneAcceptedMatch", () => {
-            console.log("Someone accepted match")
+            console.log("someone accepted ?")
+            listenersForSomeoneAcceptedMatch.forEach((cb) => cb());
         })
 
         
