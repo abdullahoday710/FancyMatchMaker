@@ -1,4 +1,8 @@
 This repository contains a prototype matchmaking system built with ASP.NET Core, Redis, and RabbitMQ, designed to explore event-driven architecture. It serves as a hands-on environment for learning how to build scalable, reactive, and real-time services.
+
+## Demo
+https://www.youtube.com/watch?v=8J-hV8XQAlE
+
 ## Architecture
 <img width="1701" height="1101" alt="Untitled Diagram drawio(1)" src="https://github.com/user-attachments/assets/98545b9a-e3e3-4514-8447-1f65a8dee4a1" />
 
