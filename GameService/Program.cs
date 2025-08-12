@@ -1,6 +1,7 @@
 
 using Common;
 using GameService.Context;
+using GameService.Hubs;
 using GameService.Services;
 using GameService.Subscribers;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,9 @@ namespace GameService
             CommonServiceBuilder.AddRabbitMQServices<GameServiceDBContext>(ref builder);
             CommonServiceBuilder.CreateCommonCorsPolicies(ref builder);
 
+            builder.Services.AddSingleton<GameNotifierService>();
+            builder.Services.AddSingleton<OngoingGameService>();
+
             RegisterSubscribers(ref builder);
 
             // Add services to the container.
@@ -37,9 +41,6 @@ namespace GameService
             });
 
             builder.Services.AddSignalR();
-
-            builder.Services.AddSingleton<GameNotifierService>();
-            builder.Services.AddSingleton<OngoingGameService>();
 
             var app = builder.Build();
             app.UseRouting();
@@ -56,6 +57,8 @@ namespace GameService
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.MapHub<GameServiceHub>("/gameServiceHub").RequireCors("LocalhostAllowAll");
 
             app.MapControllers();
 

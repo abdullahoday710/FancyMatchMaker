@@ -2,6 +2,7 @@
 {
     public class PlayerState
     {
+        public required long PlayerID { get; set; }
         public required GameStances ChosenStance { get; set; }
         public required bool ChoiceMade { get; set; }
         public required int RoundsWon { get; set; }

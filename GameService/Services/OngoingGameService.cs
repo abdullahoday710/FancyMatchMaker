@@ -19,6 +19,17 @@ namespace GameService.Services
             _notifierService = notifierService;
         }
 
+        public async Task ConcludeMatch(RedisOnGoingMatchWrapper match)
+        {
+            long? winner = await match.DetermineMatchWinner();
+
+            var players = await match.GetAllPlayerStates();
+
+            await _notifierService.NotifyGameConcluded(players, winner);
+
+            await match.DestroyMatch();
+        }
+
         public async Task SetPlayerStance(GameStances stance, long playerID)
         {
             RedisOnGoingMatchWrapper? match = await RedisOnGoingMatchWrapper.GetMatchForPlayer(playerID, _redis);
@@ -34,7 +45,23 @@ namespace GameService.Services
 
                     await match.UpdateStateForPlayer(playerID, playerState);
 
-                    // TODO : notify all players that this player has made a play.
+                    var matchPlayers = await match.GetAllPlayerStates();
+                    await _notifierService.NotifyStancePlayed(matchPlayers, playerID);
+
+                    int finished_players = 0;
+
+                    foreach (var player in matchPlayers)
+                    { 
+                        if (player.ChoiceMade == true)
+                        {
+                            finished_players++;
+                        }
+                    }
+
+                    if (finished_players == 2)
+                    {
+                        await ConcludeMatch(match);
+                    }
                 }
             }
 

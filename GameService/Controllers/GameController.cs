@@ -16,11 +16,11 @@ namespace GameService.Controllers
 
         [HttpPost]
         [Route("SetStance")]
-        public async Task<IActionResult> SetStance(SetStanceRequest request)
+        public async Task<IActionResult> SetStance([FromBody] SetStanceRequest request)
         {
             if (UserId != null)
             {
-                await _gameService.SetPlayerStance(request.stance, UserId.Value);
+                await _gameService.SetPlayerStance(request.Stance, UserId.Value);
 
                 return Ok();
             }

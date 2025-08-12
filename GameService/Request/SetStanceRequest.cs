@@ -4,6 +4,6 @@ namespace GameService.Request
 {
     public class SetStanceRequest
     {
-        public required GameStances stance;
+        public required GameStances Stance { get; set; }
     }
 }

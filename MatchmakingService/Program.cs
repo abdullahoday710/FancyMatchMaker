@@ -59,7 +59,7 @@ namespace MatchmakingService
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.MapHub<MatchmakingHub>("/matchmakingHub").RequireCors("LocalhostAllowAll"); ;
+            app.MapHub<MatchmakingHub>("/matchmakingHub").RequireCors("LocalhostAllowAll");
 
             app.MapControllers();
 

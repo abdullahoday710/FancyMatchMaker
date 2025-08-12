@@ -34,6 +34,7 @@ namespace GameService.RedisHandlers
             {
                 var initialPlayerState = new PlayerState
                 {
+                    PlayerID = playerID,
                     ChosenStance = GameStances.None,
                     ChoiceMade = false,
                     RoundsWon = 0,
@@ -94,6 +95,26 @@ namespace GameService.RedisHandlers
             return JsonSerializer.Deserialize<PlayerState>(json!);
         }
 
+        public async Task<List<PlayerState>> GetAllPlayerStates()
+        {
+            var entries = await _redis.HashGetAllAsync(_matchKey);
+            if (entries.Length == 0)
+                return new List<PlayerState>();
+
+            var result = new List<PlayerState>(entries.Length);
+            foreach (var entry in entries)
+            {
+                if (!entry.Value.IsNullOrEmpty)
+                {
+                    var state = JsonSerializer.Deserialize<PlayerState>(entry.Value!);
+                    if (state != null)
+                        result.Add(state);
+                }
+            }
+
+            return result;
+        }
+
         public async Task DestroyMatch()
         {
             var players = await _redis.HashKeysAsync(_matchKey);
@@ -105,6 +126,45 @@ namespace GameService.RedisHandlers
             }
 
             await _redis.KeyDeleteAsync(_matchKey);
+        }
+
+        public async Task<long?> DetermineMatchWinner()
+        {
+            var players = await GetAllPlayerStates();
+
+            // Only consider players who made a choice
+            var chosenPlayers = players.Where(p => p.ChoiceMade).ToList();
+
+            if (chosenPlayers.Count < 2)
+            {
+                throw new InvalidOperationException("Trying to determine a winner but not all players have made a play.");
+            }
+
+            var p1 = chosenPlayers[0];
+            var p2 = chosenPlayers[1];
+
+            if (p1.ChosenStance == p2.ChosenStance)
+                return null; // Tie
+
+            // Rock beats Scissors
+            if (p1.ChosenStance == GameStances.Rock && p2.ChosenStance == GameStances.Scissors)
+                return p1.PlayerID;
+            if (p2.ChosenStance == GameStances.Rock && p1.ChosenStance == GameStances.Scissors)
+                return p2.PlayerID;
+
+            // Scissors beats Paper
+            if (p1.ChosenStance == GameStances.Scissors && p2.ChosenStance == GameStances.Paper)
+                return p1.PlayerID;
+            if (p2.ChosenStance == GameStances.Scissors && p1.ChosenStance == GameStances.Paper)
+                return p2.PlayerID;
+
+            // Paper beats Rock
+            if (p1.ChosenStance == GameStances.Paper && p2.ChosenStance == GameStances.Rock)
+                return p1.PlayerID;
+            if (p2.ChosenStance == GameStances.Paper && p1.ChosenStance == GameStances.Rock)
+                return p2.PlayerID;
+
+            return null; // Shouldn't reach here if all stances are valid
         }
     }
 }
