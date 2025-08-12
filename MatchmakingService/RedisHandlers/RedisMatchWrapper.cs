@@ -1,4 +1,6 @@
-﻿using MatchmakingService.Entities;
+﻿using Common.Messaging;
+using DotNetCore.CAP;
+using MatchmakingService.Entities;
 using MatchmakingService.Services;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using StackExchange.Redis;
@@ -82,6 +84,25 @@ namespace MatchmakingService.RedisHandlers
             return playerIDs;
         }
 
+        public async Task<List<long>> GetPlayerIDs()
+        {
+            var matchHashKeys = await _redis.HashKeysAsync(_matchKey);
+
+            var playerIDs = new List<long>();
+
+            foreach (var hashKey in matchHashKeys)
+            {
+                if (hashKey.ToString() == "expiry")
+                {
+                    continue;
+                }
+
+                playerIDs.Add(long.Parse(hashKey.ToString()));
+            }
+
+            return playerIDs;
+        }
+
         public async Task<bool> CheckIfEveryoneAccepted()
         {
             var matchHashKeys = await _redis.HashKeysAsync(_matchKey);
@@ -118,7 +139,7 @@ namespace MatchmakingService.RedisHandlers
             return false;
         }
 
-        public async Task PlayerAcceptMatch(long userID, MatchMakerNotifierService notifyService)
+        public async Task PlayerAcceptMatch(long userID, MatchMakerNotifierService notifyService, ICapPublisher publisher)
         {
 
             var currentStatus = await _redis.HashGetAsync(_matchKey, userID.ToString());
@@ -147,9 +168,20 @@ namespace MatchmakingService.RedisHandlers
             bool should_match_start = await CheckIfEveryoneAccepted();
             if (should_match_start)
             {
-                // notify all players that a match has started
                 
+                // Notify our game service that a new match has started.
+                var playerIDs = await GetPlayerIDs();
+                NewMatchStartedMessage matchStartedMessage = new NewMatchStartedMessage { matchID = GetMatchID(), playerIDs = playerIDs };
+
+                await publisher.PublishAsync(TopicNames.NewMatchStarted, matchStartedMessage);
+
+
+                // notify all players that a match has started
                 await notifyService.NotifyMatchStarted(playersToNotify.ToArray());
+
+                
+
+
 
                 // Clean up the match from our redis queue.
                 await DestroyMatch();

@@ -1,12 +1,18 @@
 
 using Common;
 using GameService.Context;
+using GameService.Subscribers;
 using Microsoft.EntityFrameworkCore;
 
 namespace GameService
 {
     public class Program
     {
+        public static void RegisterSubscribers(ref WebApplicationBuilder builder)
+        {
+            builder.Services.AddTransient<MatchStartedSubscriber>();
+        }
+
         public static void Main(string[] args)
         {
 
@@ -16,6 +22,8 @@ namespace GameService
             CommonServiceBuilder.AddAuthServices(ref builder, true);
             CommonServiceBuilder.AddRabbitMQServices<GameServiceDBContext>(ref builder);
             CommonServiceBuilder.CreateCommonCorsPolicies(ref builder);
+
+            RegisterSubscribers(ref builder);
 
             // Add services to the container.
 

@@ -1,4 +1,6 @@
-﻿using MatchmakingService.Entities;
+﻿using Common.Messaging;
+using DotNetCore.CAP;
+using MatchmakingService.Entities;
 using MatchmakingService.RedisHandlers;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -11,14 +13,18 @@ namespace MatchmakingService.Services
         private readonly IDatabase _redis;
         private RedisMatchMakingQueue RedisMatchMakingQueue;
         private readonly MatchMakerNotifierService _notifyService;
+        private readonly ICapPublisher _capPublisher;
 
-        public MatchMakerService(MatchMakerNotifierService notifyService)
+        public MatchMakerService(MatchMakerNotifierService notifyService, ICapPublisher capPublisher)
         {
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
+
             _redis = connection.GetDatabase();
             _notifyService = notifyService;
 
             RedisMatchMakingQueue = new RedisMatchMakingQueue(_redis);
+
+            _capPublisher = capPublisher;
         }
 
         public async Task<bool> EnqueuePlayerAsync(MatchMakingProfileEntity player)
@@ -81,7 +87,7 @@ namespace MatchmakingService.Services
             RedisMatchWrapper match = new RedisMatchWrapper(_redis, matchID);
 
             // In this case, The PlayerAcceptMatch function must notify the players that a match has started because it will destroy the match entry within redis once the function returns.
-            await match.PlayerAcceptMatch(userID, _notifyService);
+            await match.PlayerAcceptMatch(userID, _notifyService, _capPublisher);
         }
 
         public async Task CheckMatchTimeoutsAsync()

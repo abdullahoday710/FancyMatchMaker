@@ -11,7 +11,6 @@ namespace MatchmakingService
     {
         public static void RegisterSubscribers(ref WebApplicationBuilder builder)
         {
-            // Register all your kafka subscribers here
             builder.Services.AddTransient<UserRegisteredSubscriber>();
         }
 
