@@ -46,6 +46,20 @@ services:
       - match_making_postgres_data:/var/lib/postgresql/data
     networks:
       - backend
+    
+  gameservice_postgres:
+    image: postgres:16
+    container_name: gameservice_postgres
+    environment:
+      POSTGRES_USER: gameservice_db
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: gameservice_db
+    ports:
+      - "5134:5432"
+    volumes:
+      - gameservice_postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
 
 networks:
   backend:
@@ -53,3 +67,4 @@ networks:
 volumes:
   auth_postgres_data:
   match_making_postgres_data:
+  gameservice_postgres_data:
