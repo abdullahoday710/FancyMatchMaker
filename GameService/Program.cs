@@ -1,6 +1,7 @@
 
 using Common;
 using GameService.Context;
+using GameService.Services;
 using GameService.Subscribers;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +37,9 @@ namespace GameService
             });
 
             builder.Services.AddSignalR();
+
+            builder.Services.AddSingleton<GameNotifierService>();
+            builder.Services.AddSingleton<OngoingGameService>();
 
             var app = builder.Build();
             app.UseRouting();

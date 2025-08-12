@@ -1,21 +1,22 @@
 ﻿using Common.Messaging;
 using DotNetCore.CAP;
-using Microsoft.EntityFrameworkCore;
+using GameService.Services;
 
 namespace GameService.Subscribers
 {
     public class MatchStartedSubscriber : ICapSubscribe
     {
-        [CapSubscribe(TopicNames.NewMatchStarted)]
-        public void HandleMessage(NewMatchStartedMessage message)
-        {
-            Console.WriteLine("New match has started !!!!");
-            Console.WriteLine("Match ID : " + message.matchID);
+        private readonly OngoingGameService _gameService;
 
-            foreach (var playerID in message.playerIDs)
-            {
-                Console.WriteLine(playerID);
-            }
+        public MatchStartedSubscriber(OngoingGameService gameService)
+        {
+            _gameService = gameService;
+        }
+
+        [CapSubscribe(TopicNames.NewMatchStarted)]
+        public async Task HandleMessage(NewMatchStartedMessage message)
+        {
+            await _gameService.GenerateNewGameEntry(message);
         }
     }
 }
