@@ -70,6 +70,28 @@ namespace Common
             });
         }
 
+        public static void CreateCommonCorsPolicies(ref WebApplicationBuilder builder)
+        {
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("LocalhostAllowAll", policy =>
+                {
+                    policy.SetIsOriginAllowed(origin =>
+                    {
+                        if (string.IsNullOrEmpty(origin))
+                            return false;
+
+                        // Parse origin host from the URL
+                        var uri = new Uri(origin);
+                        return uri.Host == "localhost" || uri.Host == "127.0.0.1";
+                    })
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+                });
+            });
+        }
+
         public static void AddAuthServicesToSwaggerGen(ref SwaggerGenOptions options)
         {
             options.AddSecurityDefinition("Bearer",

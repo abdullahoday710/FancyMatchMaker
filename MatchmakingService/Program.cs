@@ -23,29 +23,11 @@ namespace MatchmakingService
             // Add services to the container.
             CommonServiceBuilder.AddAuthServices(ref builder, true);
             CommonServiceBuilder.AddRabbitMQServices<MatchMakingServiceDBContext>(ref builder);
-
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("LocalhostAllowAll", policy =>
-                {
-                    policy.SetIsOriginAllowed(origin =>
-                    {
-                        if (string.IsNullOrEmpty(origin))
-                            return false;
-
-                        // Parse origin host from the URL
-                        var uri = new Uri(origin);
-                        return uri.Host == "localhost" || uri.Host == "127.0.0.1";
-                    })
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
-                });
-            });
+            CommonServiceBuilder.CreateCommonCorsPolicies(ref builder);
 
             RegisterSubscribers(ref builder);
 
-            // Register matchmaking service as singleton
+            // Register matchmaking services as singleton
             builder.Services.AddSingleton<MatchMakerNotifierService>();
             builder.Services.AddSingleton<MatchMakerService>();
 

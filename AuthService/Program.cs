@@ -15,24 +15,7 @@ namespace AuthService
 
             CommonServiceBuilder.AddAuthServices(ref builder, false);
             CommonServiceBuilder.AddRabbitMQServices<AuthServiceDBContext>(ref builder);
-
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("LocalhostAllowAll", policy =>
-                {
-                    policy.SetIsOriginAllowed(origin =>
-                    {
-                        if (string.IsNullOrEmpty(origin))
-                            return false;
-
-                        // Parse origin host from the URL
-                        var uri = new Uri(origin);
-                        return uri.Host == "localhost" || uri.Host == "127.0.0.1";
-                    })
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
-                });
-            });
+            CommonServiceBuilder.CreateCommonCorsPolicies(ref builder);
 
 
             builder.Services.AddDataProtection();
