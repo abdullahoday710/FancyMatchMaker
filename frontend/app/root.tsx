@@ -7,12 +7,13 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 import { IsSignedIn } from "./api/userState";
 import { connectToMatchMakingHub } from "./signalRHandlers/matchMakingHubConnection";
+import { connectToGameServiceHub } from "./signalRHandlers/gameServiceHubConnection";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -47,20 +48,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    IsSignedIn().then((is_logged_in) =>
-    {
+    IsSignedIn().then((is_logged_in) => {
       console.log("AUTH STATUS ? " + is_logged_in)
-      if (is_logged_in) {
-        connectToMatchMakingHub();
-        navigate("/dashboard", { replace: true });
-      } else {
+      if (!is_logged_in) {
         navigate("/login", { replace: true });
+
+      } else {
+        connectToMatchMakingHub();
+        connectToGameServiceHub();
+        if (location.pathname === "/") {
+          navigate("/dashboard", {replace: true})
+        }
       }
     });
 
-  }, [navigate]);
+  }, [location.pathname, navigate]);
 
   return <Outlet />;
 }

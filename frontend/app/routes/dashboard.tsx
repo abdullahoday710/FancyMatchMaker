@@ -39,6 +39,7 @@ export default function Dashboard() {
   }
 
   let handleMatchStarted = async () => {
+    navigate("/game");
     cleanUp();
   }
 
