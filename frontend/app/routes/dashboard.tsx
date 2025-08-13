@@ -8,6 +8,7 @@ import MatchFoundModal from "~/components/matchFoundModal";
 import CircularCountdown from "~/components/circularCountdown";
 import AcceptedPlayersPreview from "~/components/acceptedPlayersPreview";
 import PlayerStatsCard from "~/components/playerStatsCard";
+import TopBar from "~/components/topBar";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -94,11 +95,6 @@ export default function Dashboard() {
     return () => clearInterval(interval); // cleanup on stop searching or unmount
   }, [searchingForMatch]);
 
-  let onLogOut = async () => {
-    await SignOut();
-    navigate("/login", { replace: true });
-  };
-
   let onMatchAccepted = async () => {
 
     console.log(currentMatchID.matchId);
@@ -157,19 +153,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top Bar */}
-      <header className="bg-blue-400 text-white px-6 py-4 flex justify-between items-center">
-        <div className="font-semibold text-lg">{profile.userName}</div>
-        <button
-          onClick={() => {
-            onLogOut();
-          }}
-          className="bg-red-600 hover:bg-red-700 transition px-4 py-2 rounded-md font-semibold"
-        >
-          Logout
-        </button>
-      </header>
-
+      <TopBar />
       {/* Main Content */}
       <main className="flex-grow flex flex-col items-center justify-center bg-gray-100 p-4">
         <PlayerStatsCard />

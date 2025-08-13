@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { authService, gameService } from "~/api/axiosInstances";
 import { GetUserProfile } from "~/api/userState";
+import TopBar from "~/components/topBar";
 
 export default function MatchHistoryListPage() {
     const [matches, setMatches] = useState<any[]>([]);
@@ -46,32 +47,36 @@ export default function MatchHistoryListPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
-            <h1 className="text-2xl font-bold mb-6 text-center">Match History</h1>
+        <div className="min-h-screen flex flex-col">
+            <TopBar />
+            <div className="min-h-screen bg-gray-100 p-6">
 
-            <div className="max-w-2xl mx-auto space-y-4">
-                {matches.length === 0 || playerNames == null ? (
-                    <p className="text-gray-500 text-center">No matches found.</p>
-                ) : (
-                    matches.map((match) => (
-                        <div
-                            key={match.matchUUID}
-                            className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition"
-                        >
-                            <p className="text-sm text-gray-500">
-                                <span className="font-semibold">Match UUID:</span> {match.matchUUID}
-                            </p>
-                            <div className="mt-2 grid grid-cols-2 gap-2">
-                                <p>
-                                    <span className="font-semibold">You against :</span> {renderOpponentName(match)}
+                <h1 className="text-2xl font-bold mb-6 text-center">Match History</h1>
+
+                <div className="max-w-2xl mx-auto space-y-4">
+                    {matches.length === 0 || playerNames == null ? (
+                        <p className="text-gray-500 text-center">No matches found.</p>
+                    ) : (
+                        matches.map((match) => (
+                            <div
+                                key={match.matchUUID}
+                                className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition"
+                            >
+                                <p className="text-sm text-gray-500">
+                                    <span className="font-semibold">Match UUID:</span> {match.matchUUID}
+                                </p>
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                    <p>
+                                        <span className="font-semibold">You against :</span> {renderOpponentName(match)}
+                                    </p>
+                                </div>
+                                <p className="mt-2">
+                                    <span className="font-semibold text-green-600">Winner:</span> {renderMatchWinner(match)}
                                 </p>
                             </div>
-                            <p className="mt-2">
-                                <span className="font-semibold text-green-600">Winner:</span> {renderMatchWinner(match)}
-                            </p>
-                        </div>
-                    ))
-                )}
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );
