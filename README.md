@@ -4,7 +4,7 @@ This repository contains a prototype matchmaking system built with ASP.NET Core,
 https://youtu.be/_iGjJMl0peI
 
 ## Matchmaking flow :
-<img width="1701" height="1101" alt="Untitled Diagram drawio(1)" src="https://github.com/user-attachments/assets/98545b9a-e3e3-4514-8447-1f65a8dee4a1" />
+<img width="1691" height="1091" alt="MatchMakingFlow" src="https://github.com/user-attachments/assets/074b3fcf-00ce-4086-9eae-9b42d38ca406" />
 
 ## Requirements
 
