@@ -6,6 +6,7 @@ using GameService.Repo;
 using GameService.Services;
 using GameService.Subscribers;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace GameService
 {
@@ -33,6 +34,7 @@ namespace GameService
             // Common setup
             CommonServiceBuilder.AddAuthServices(ref builder, true);
             CommonServiceBuilder.AddRabbitMQServices<GameServiceDBContext>(ref builder);
+            CommonServiceBuilder.AddRedisServices(ref builder);
             CommonServiceBuilder.CreateCommonCorsPolicies(ref builder);
 
             // Repositories

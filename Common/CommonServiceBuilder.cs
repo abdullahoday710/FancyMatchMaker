@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace Common
 {
@@ -67,6 +68,15 @@ namespace Common
                     opt.UserName = "guest";
                     opt.Password = "guest";
                 });   
+            });
+        }
+
+        public static void AddRedisServices(ref WebApplicationBuilder builder)
+        {
+            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                var configuration = ConfigurationOptions.Parse("localhost:6379", true);
+                return ConnectionMultiplexer.Connect(configuration);
             });
         }
 

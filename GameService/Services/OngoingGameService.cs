@@ -14,11 +14,10 @@ namespace GameService.Services
         private readonly IDatabase _redis;
         private readonly ICapPublisher _publisher;
 
-        public OngoingGameService(GameNotifierService notifierService, MatchHistoryService matchHistoryService, ICapPublisher publisher)
+        public OngoingGameService(GameNotifierService notifierService, MatchHistoryService matchHistoryService, ICapPublisher publisher, IConnectionMultiplexer redisConnection)
         {
-            var connection = ConnectionMultiplexer.Connect("localhost:6379");
-
-            _redis = connection.GetDatabase();
+            
+            _redis = redisConnection.GetDatabase();
 
             _notifierService = notifierService;
             _matchHistoryService = matchHistoryService;

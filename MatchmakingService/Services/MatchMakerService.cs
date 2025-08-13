@@ -15,11 +15,9 @@ namespace MatchmakingService.Services
         private readonly MatchMakerNotifierService _notifyService;
         private readonly ICapPublisher _capPublisher;
 
-        public MatchMakerService(MatchMakerNotifierService notifyService, ICapPublisher capPublisher)
+        public MatchMakerService(MatchMakerNotifierService notifyService, ICapPublisher capPublisher, IConnectionMultiplexer redisConnection)
         {
-            var connection = ConnectionMultiplexer.Connect("localhost:6379");
-
-            _redis = connection.GetDatabase();
+            _redis = redisConnection.GetDatabase();
             _notifyService = notifyService;
 
             RedisMatchMakingQueue = new RedisMatchMakingQueue(_redis);

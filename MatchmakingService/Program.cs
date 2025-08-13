@@ -33,6 +33,7 @@ namespace MatchmakingService
             // Add services to the container.
             CommonServiceBuilder.AddAuthServices(ref builder, true);
             CommonServiceBuilder.AddRabbitMQServices<MatchMakingServiceDBContext>(ref builder);
+            CommonServiceBuilder.AddRedisServices(ref builder);
             CommonServiceBuilder.CreateCommonCorsPolicies(ref builder);
 
             RegisterRepos(ref builder);
