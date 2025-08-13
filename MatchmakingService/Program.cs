@@ -1,6 +1,8 @@
 using Common;
+using Common.Repo;
 using MatchmakingService.Context;
 using MatchmakingService.Hubs;
+using MatchmakingService.Repo;
 using MatchmakingService.Services;
 using MatchmakingService.Subscribers;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,15 @@ namespace MatchmakingService
         public static void RegisterSubscribers(ref WebApplicationBuilder builder)
         {
             builder.Services.AddTransient<UserRegisteredSubscriber>();
+            builder.Services.AddTransient<MatchConcludedSubscriber>();
+
+        }
+
+        public static void RegisterRepos(ref WebApplicationBuilder builder)
+        {
+            builder.Services.AddScoped(typeof(IBaseRepo<>), typeof(BaseRepo<>));
+
+            builder.Services.AddScoped<IMatchMakingProfileRepo, MatchMakingProfileRepo>();
         }
 
         public static void Main(string[] args)
@@ -24,6 +35,7 @@ namespace MatchmakingService
             CommonServiceBuilder.AddRabbitMQServices<MatchMakingServiceDBContext>(ref builder);
             CommonServiceBuilder.CreateCommonCorsPolicies(ref builder);
 
+            RegisterRepos(ref builder);
             RegisterSubscribers(ref builder);
 
             // Register matchmaking services as singleton

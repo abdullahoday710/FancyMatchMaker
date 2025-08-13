@@ -1,4 +1,5 @@
 ﻿using Common.Messaging;
+using DotNetCore.CAP;
 using GameService.Entities;
 using GameService.MatchState;
 using GameService.RedisHandlers;
@@ -11,8 +12,9 @@ namespace GameService.Services
         private readonly GameNotifierService _notifierService;
         private readonly MatchHistoryService _matchHistoryService;
         private readonly IDatabase _redis;
+        private readonly ICapPublisher _publisher;
 
-        public OngoingGameService(GameNotifierService notifierService, MatchHistoryService matchHistoryService)
+        public OngoingGameService(GameNotifierService notifierService, MatchHistoryService matchHistoryService, ICapPublisher publisher)
         {
             var connection = ConnectionMultiplexer.Connect("localhost:6379");
 
@@ -20,6 +22,8 @@ namespace GameService.Services
 
             _notifierService = notifierService;
             _matchHistoryService = matchHistoryService;
+
+            _publisher = publisher;
         }
 
         public async Task ConcludeMatch(RedisOnGoingMatchWrapper match)
@@ -40,6 +44,10 @@ namespace GameService.Services
             await _matchHistoryService.AddMatch(matchEntry);
 
             await match.DestroyMatch();
+
+            MatchConcludedMessage matchConcludedMessage = new MatchConcludedMessage { MatchUUID = match.GetMatchID(), ParticipatingPlayerIDs = playerIDs, WinnerPlayerID = winner };
+
+            await _publisher.PublishAsync(TopicNames.MatchConcluded, matchConcludedMessage);
         }
 
         public async Task SetPlayerStance(GameStances stance, long playerID)

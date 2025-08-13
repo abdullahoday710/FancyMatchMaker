@@ -21,14 +21,13 @@ namespace MatchmakingService.Context
                 // Make the userID a unique index
                 matchMakingProfile.HasIndex(u => u.UserID).IsUnique();
 
-                matchMakingProfile.Property(e => e.MatchesPlayed)
-                      .HasDefaultValue(0);
+                matchMakingProfile.Property(e => e.MatchesPlayed).HasDefaultValue(0);
 
-                matchMakingProfile.Property(e => e.MatchesWon)
-                      .HasDefaultValue(0);
+                matchMakingProfile.Property(e => e.MatchesWon).HasDefaultValue(0);
 
-                matchMakingProfile.Property(e => e.MatchesLost)
-                      .HasDefaultValue(0);
+                matchMakingProfile.Property(e => e.MatchesLost).HasDefaultValue(0);
+
+                matchMakingProfile.Property(e => e.MatchesTied).HasDefaultValue(0);
             });
 
         }

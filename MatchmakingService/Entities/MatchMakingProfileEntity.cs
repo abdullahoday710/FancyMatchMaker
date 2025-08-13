@@ -10,5 +10,6 @@ namespace MatchmakingService.Entities
         public int MatchesPlayed { get; set; }
         public int MatchesWon { get; set; }
         public int MatchesLost { get; set; }
+        public int MatchesTied { get; set; }
     }
 }
