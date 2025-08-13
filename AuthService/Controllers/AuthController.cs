@@ -38,7 +38,7 @@ namespace AuthService.Controllers
                 if (user != null && await _userManager.CheckPasswordAsync(user, request.Password))
                 {
                     var token = JWTUtils.GenerateJwtToken(user.Id.ToString(), user.Email, DateTime.UtcNow.AddHours(24));
-                    LoginResponse response = new LoginResponse { AuthToken = token, Email = user.Email, UserName = user.UserName };
+                    LoginResponse response = new LoginResponse { AuthToken = token, Email = user.Email, UserName = user.UserName, UserId = user.Id };
 
                     return Ok(new BaseResponse(true, 200, "success", response));
                 }

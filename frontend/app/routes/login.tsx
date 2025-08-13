@@ -43,7 +43,7 @@ export default function Login() {
       "password": password
     })
 
-    var profile = {"userEmail" : response.data.record.email, "userName": response.data.record.userName};
+    var profile = {"userEmail" : response.data.record.email, "userName": response.data.record.userName, "userID": response.data.record.userId};
 
     await SignIn(response.data.record.authToken, JSON.stringify(profile));
 
