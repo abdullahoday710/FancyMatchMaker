@@ -6,6 +6,10 @@ https://youtu.be/_iGjJMl0peI
 ## Matchmaking flow :
 <img width="1691" height="1091" alt="MatchMakingFlow" src="https://github.com/user-attachments/assets/074b3fcf-00ce-4086-9eae-9b42d38ca406" />
 
+## Game flow :
+<img width="1701" height="591" alt="Game flow drawio" src="https://github.com/user-attachments/assets/fe1dee8c-bfad-48a6-b662-03d8585266b5" />
+
+
 ## Requirements
 
 Ensure you have the following installed:
