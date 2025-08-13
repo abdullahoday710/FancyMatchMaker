@@ -7,6 +7,7 @@ import MatchFoundModalHandle from "~/components/matchFoundModal";
 import MatchFoundModal from "~/components/matchFoundModal";
 import CircularCountdown from "~/components/circularCountdown";
 import AcceptedPlayersPreview from "~/components/acceptedPlayersPreview";
+import PlayerStatsCard from "~/components/playerStatsCard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -170,7 +171,8 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow flex items-center justify-center bg-gray-100 p-4">
+      <main className="flex-grow flex flex-col items-center justify-center bg-gray-100 p-4">
+        <PlayerStatsCard />
         <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-sm flex justify-center">
           {RenderQueueControlButtons()}
         </div>
