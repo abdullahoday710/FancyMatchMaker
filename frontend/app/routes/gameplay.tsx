@@ -1,20 +1,74 @@
 import { useState, useEffect } from "react";
 import { gameService } from "~/api/axiosInstances";
+import { GetUserProfile } from "~/api/userState";
 import { onGameConcluded, onStancePlayed } from "~/signalRHandlers/gameServiceHubConnection";
+import { useNavigate } from "react-router";
 
 export default function GamePlay() {
     const [playerChoice, setPlayerChoice] = useState(null);
-    const [computerChoice, setComputerChoice] = useState(null);
+    const [opponentChoice, setOpponentChoice] = useState(null);
     const [result, setResult] = useState(null);
     const [waiting, setWaiting] = useState(false);
+    const [otherPlayerMadeMove, setOtherPlayerMadeMove] = useState(false);
+    const navigate = useNavigate();
+
+    function getChoiceById(id : any) {
+  return choices.find(choice => choice.id === id) || null;
+}
+
+    let handleStancePlayed = async (data: any) => {
+        var issuer_player = data.player;
+        console.log(data)
+        var profile = await GetUserProfile();
+
+        if (profile != null) {
+            if (issuer_player != profile.userID) {
+                setOtherPlayerMadeMove(true);
+            }
+        }
+
+    }
+
+    let handleConcludeMatch = async (data : any) =>
+    {
+        var profile = await GetUserProfile();
+
+        if (data.winner == null)
+        {
+            setResult("It is a tie. 🤝")
+        }
+        else
+        {
+            if (profile.userID == data.winner)
+            {
+                setResult("You win! 🎉");
+            }
+            else
+            {
+                setResult("You lose! 😢");
+            }
+        }
+
+        console.log(data);
+
+        data.playerStates.map((playerState : any) => {
+            if(playerState.playerID != profile.userID)
+            {
+                let opp_choice = getChoiceById(playerState.chosenStance);
+                setOpponentChoice(opp_choice);
+            }
+        })
+
+        setWaiting(false);
+    }
 
     useEffect(() => {
         const unsubscribeStancePlayed = onStancePlayed((data: any) => {
-            console.log(data)
+            handleStancePlayed(data);
         });
 
         const unsubscribeMatchConcluded = onGameConcluded((data: any) => {
-            console.log(data)
+            handleConcludeMatch(data);
         });
 
         return () => {
@@ -33,25 +87,6 @@ export default function GamePlay() {
         setPlayerChoice(choice);
         setWaiting(true);
         let resp = await gameService.post("/Game/SetStance", { stance: choice.id })
-
-        // setTimeout(() => {
-        //   const compChoice = choices[Math.floor(Math.random() * choices.length)];
-        //   setComputerChoice(compChoice);
-
-        //   if (choice.name === compChoice.name) {
-        //     setResult("It's a draw!");
-        //   } else if (
-        //     (choice.name === "Rock" && compChoice.name === "Scissors") ||
-        //     (choice.name === "Paper" && compChoice.name === "Rock") ||
-        //     (choice.name === "Scissors" && compChoice.name === "Paper")
-        //   ) {
-        //     setResult("You win! 🎉");
-        //   } else {
-        //     setResult("You lose! 😢");
-        //   }
-
-        //   setWaiting(false);
-        // }, 2000); // 2 second delay
     }
 
     return (
@@ -70,7 +105,11 @@ export default function GamePlay() {
                                 <span>{choice.name}</span>
                             </button>
                         ))}
+
                     </div>
+                    {otherPlayerMadeMove && (
+                        <h2>The other player has made their move, Waiting on you to conclude the match</h2>
+                    )}
                 </>
             )}
 
@@ -87,16 +126,13 @@ export default function GamePlay() {
                         You chose: {playerChoice.icon} {playerChoice.name}
                     </p>
                     <p>
-                        Opponent chose: {computerChoice.icon} {computerChoice.name}
+                        Opponent chose: {opponentChoice.icon} {opponentChoice.name}
                     </p>
                     <h3>{result}</h3>
                     <button
                         style={styles.playAgain}
                         onClick={() => {
-                            setPlayerChoice(null);
-                            setResult(null);
-                            setComputerChoice(null);
-                            setWaiting(false);
+                            navigate("/dashboard")
                         }}
                     >
                         Play Again
