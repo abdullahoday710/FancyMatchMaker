@@ -1,7 +1,8 @@
-
 using Common;
+using Common.Repo;
 using GameService.Context;
 using GameService.Hubs;
+using GameService.Repo;
 using GameService.Services;
 using GameService.Subscribers;
 using Microsoft.EntityFrameworkCore;
@@ -15,38 +16,52 @@ namespace GameService
             builder.Services.AddTransient<MatchStartedSubscriber>();
         }
 
+        public static void RegisterRepos(ref WebApplicationBuilder builder)
+        {
+            builder.Services.AddScoped(typeof(IBaseRepo<>), typeof(BaseRepo<>));
+
+            builder.Services.AddScoped<IMatchHistoryRepository, MatchHistoryRepo>();
+        }
+
         public static void Main(string[] args)
         {
-
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddDbContext<GameServiceDBContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("GameServiceDB")));
 
+            builder.Services.AddDbContext<GameServiceDBContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("GameServiceDB")));
+
+            // Common setup
             CommonServiceBuilder.AddAuthServices(ref builder, true);
             CommonServiceBuilder.AddRabbitMQServices<GameServiceDBContext>(ref builder);
             CommonServiceBuilder.CreateCommonCorsPolicies(ref builder);
 
-            builder.Services.AddSingleton<GameNotifierService>();
-            builder.Services.AddSingleton<OngoingGameService>();
+            // Repositories
+            RegisterRepos(ref builder);
 
+            // Services
+            builder.Services.AddScoped<MatchHistoryService>();
+            builder.Services.AddScoped<OngoingGameService>();
+            builder.Services.AddSingleton<GameNotifierService>();
+
+            // Subscribers
             RegisterSubscribers(ref builder);
 
-            // Add services to the container.
-
+            // Controllers & Swagger
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-
             builder.Services.AddSwaggerGen(c =>
             {
                 CommonServiceBuilder.AddAuthServicesToSwaggerGen(ref c);
             });
 
+            // SignalR
             builder.Services.AddSignalR();
 
             var app = builder.Build();
+
             app.UseRouting();
             app.UseCors("LocalhostAllowAll");
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -54,12 +69,10 @@ namespace GameService
             }
 
             app.UseHttpsRedirection();
-
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapHub<GameServiceHub>("/gameServiceHub").RequireCors("LocalhostAllowAll");
-
             app.MapControllers();
 
             app.Run();
