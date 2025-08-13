@@ -24,6 +24,21 @@ export const gameService = axios.create({
   headers: {'Content-Type': 'application/json'}
 })
 
+authService.interceptors.request.use(
+  async (config) => {
+    const token = await GetAuthToken();
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 matchService.interceptors.request.use(
   async (config) => {
     const token = await GetAuthToken();
